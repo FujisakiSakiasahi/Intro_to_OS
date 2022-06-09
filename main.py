@@ -1,5 +1,11 @@
+from textwrap import indent
 import threading
 from time import sleep
+
+job_list = []
+partition_list = []
+logs = []
+error = []
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -24,6 +30,7 @@ class Partition:
 
         self.busy = False
         self.job = None
+        assignJob()
 
 
 class Job:
@@ -58,39 +65,59 @@ def printPartitionList():
         'True' if partition.busy else 'False', 
         partition.time))
 
-if __name__ == "__main__":
-    job_list = []
-    partition_list = []
-    job_waiting_list = []
+    print("Jobs: " + (", ").join(list(job.id for job in job_list)))
+    print("Logs:\n" + ("\n").join(logs))
 
-    for x in readjobs("job_list.txt"):
-        job_list.append(Job(x[0], x[2], x[1]))
-
-    for x in readpartitions("partition_list.txt"):
-        partition_list.append(Partition(x[0], x[1]))
-
-    printPartitionList()
-
+def assignJob():
     for job in job_list:
         for x in partition_list:
             if job.size <= x.size and not x.busy:
                 x.job = job
                 x.busy = True
                 x.time = job.time
-                print(f"Assigned job {job.id} to partition {x.id}.")
+                logs.append(f"Assigned job {job.id} to partition {x.id}.")
                 x.startWork()
+                job_list.remove(job)
                 break
             else:
                 continue
-        job_waiting_list.append(job)
-        print(f"Added job {job.id} to waiting list.")
 
-    print()
-    print()
+#cant get it to work
+def checkInsufficient():
+    for job in job_list:
+        enuf = False
+        for part in partition_list:
+            if job.size <= part.size:
+                enuf = True
+                break
+            else:
+                continue
+        
+        if enuf:
+            continue
 
-    while(True):
+        logs.append(f"Moving job {job.id} to error, due to lack of memory.")
+        error.append(job)
+        job_list.remove(job)
+
+def main():
+    checkInsufficient()
+    assignJob()
+    printPartitionList()
+
+    while(not all(list(not part.busy for part in partition_list))):
         cls()
         printPartitionList()
         sleep(.5)
 
+    printPartitionList()
 
+if __name__ == "__main__":
+    for x in readjobs("job_list.txt"):
+        job_list.append(Job(x[0], x[2], x[1]))
+
+    for x in readpartitions("partition_list.txt"):
+        partition_list.append(Partition(x[0], x[1]))
+
+    x = threading.Thread(target=main)
+    x.start()
