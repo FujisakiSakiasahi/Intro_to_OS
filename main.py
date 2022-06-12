@@ -1,11 +1,16 @@
+from calendar import c
+from multiprocessing.sharedctypes import Value
+from re import I
 from textwrap import indent
 import threading
 from time import sleep
+from timeit import default_timer as timer
 
 job_list = []
 partition_list = []
 logs = []
 error = []
+jobType = False #false = first fit / true = best fit
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -30,7 +35,10 @@ class Partition:
 
         self.busy = False
         self.job = None
-        assignJob()
+        if not jobType:
+            assignJobFirstFit()
+        else:
+            assignJobBestFit()
 
 
 class Job:
@@ -56,31 +64,65 @@ def readpartitions(file):
         return list(tuple(x.replace("\n", "").split(" ")) for x in file.readlines())
 
 def printPartitionList():
-    print("{:>5} {:>8} {:>8} {:>8} {:>15}".format('No', 'Size', 'Job', 'Busy', 'Time Remaining'))
+    print("{:>5} {:>8} {:>8} {:>8} {:>15} {:>25}".format('No', 'Size', 'Job', 'Busy', 'Time Remaining', 'Internal Fragmentation'))
 
     for partition in partition_list:
-        print("{:>5} {:>8} {:>8} {:>8} {:>15}".format(partition.id, 
+        print("{:>5} {:>8} {:>8} {:>8} {:>15} {:>25}".format(partition.id, 
         partition.size, 
         'NULL' if partition.job is None else partition.job.id, 
         'True' if partition.busy else 'False', 
-        partition.time))
+        partition.time,
+        str(int(partition.size) - int(partition.job.size)) if partition.busy else '0'))
 
     print("Jobs: " + (", ").join(list(job.id for job in job_list)))
     print("Logs:\n" + ("\n").join(logs))
 
-def assignJob():
+def assignJobFirstFit():
     for job in job_list:
         for x in partition_list:
             if job.size <= x.size and not x.busy:
-                x.job = job
+                tempJob = job
+                try:
+                    job_list.remove(job)
+                except ValueError:
+                    break
                 x.busy = True
-                x.time = job.time
-                logs.append(f"Assigned job {job.id} to partition {x.id}.")
+                x.job = tempJob
+                x.time = tempJob.time
+                logs.append(f"Assigned job {tempJob.id} ({tempJob.size}) to partition {x.id} ({x.size}).")
                 x.startWork()
-                job_list.remove(job)
                 break
             else:
                 continue
+
+def assignJobBestFit():
+    for job in job_list:
+        best = None
+
+        for part in partition_list:
+            if job.size <= part.size and not part.busy:
+                if best is None:
+                    best = part
+                elif best.size > part.size:
+                    best = part
+                else:
+                    continue
+            else:
+                continue
+
+        if best is not None:
+            tempJob = job
+            try:
+                job_list.remove(job)
+            except ValueError:
+                break
+            best.busy = True
+            best.job = tempJob
+            best.time = tempJob.time
+            logs.append(f"Assigned job {tempJob.id} ({tempJob.size}) to partition {best.id} ({best.size}).")
+            best.startWork()
+        else:
+            continue
 
 #cant get it to work
 def checkInsufficient():
@@ -101,8 +143,14 @@ def checkInsufficient():
         job_list.remove(job)
 
 def main():
+    start = timer()
     checkInsufficient()
-    assignJob()
+
+    if not jobType:
+        assignJobFirstFit()
+    else:
+        assignJobBestFit()
+
     printPartitionList()
 
     while(not all(list(not part.busy for part in partition_list))):
@@ -111,6 +159,8 @@ def main():
         sleep(.5)
 
     printPartitionList()
+    end = timer()
+    print("Time Taken = " + str(end-start))
 
 if __name__ == "__main__":
     for x in readjobs("job_list.txt"):
@@ -119,5 +169,9 @@ if __name__ == "__main__":
     for x in readpartitions("partition_list.txt"):
         partition_list.append(Partition(x[0], x[1]))
 
+
+    jobType = True
+
     x = threading.Thread(target=main)
     x.start()
+
