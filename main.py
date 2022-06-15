@@ -20,7 +20,7 @@ def threaded(fn):
     return wrapper
 
 class Partition:
-    def __init__(self, id, size):
+    def __init__(self, id, size:int):
         self.id = id
         self.size = size
         self.time = int(0)
@@ -42,7 +42,7 @@ class Partition:
 
 
 class Job:
-    def __init__(self, id, size, time):
+    def __init__(self, id, size:int, time):
         self.id = id
         self.size = size
         self.time = int(time)
@@ -158,19 +158,19 @@ def main():
         printPartitionList()
         sleep(.5)
 
+    cls()
     printPartitionList()
     end = timer()
     print("Time Taken = " + str(end-start))
 
 if __name__ == "__main__":
     for x in readjobs("job_list.txt"):
-        job_list.append(Job(x[0], x[2], x[1]))
+        job_list.append(Job(x[0], int(x[2]), x[1]))
 
     for x in readpartitions("partition_list.txt"):
-        partition_list.append(Partition(x[0], x[1]))
+        partition_list.append(Partition(x[0], int(x[1])))
 
-
-    jobType = True
+    jobType = False
 
     x = threading.Thread(target=main)
     x.start()
