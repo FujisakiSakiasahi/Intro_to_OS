@@ -1,8 +1,4 @@
 import os
-from calendar import c
-from multiprocessing.sharedctypes import Value
-from re import I
-from textwrap import indent
 import threading
 from time import sleep
 from timeit import default_timer as timer
