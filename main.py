@@ -247,8 +247,9 @@ def main():
     end = timer()
     print("Job type: " + str("Best Fit" if jobType else "First Fit"))
     print("Time Taken = " + "{:.4f}s".format(end-start))
-    print("Average Time taken per job: " + str((end-start) / 25)) #avg jobs processed per time unit
-    print("Items added to waiting list: " + str(avgWait[1])) #waiting queue length
+    print("Average Time taken per job (s): " + str((end-start) / 25)) #avg jobs processed per time unit
+    print("Average Time taken per job: " + "{:.2f}".format(25 / (end-start))) #avg jobs processed per time unit
+    print("Items added to waiting list: " + "{:.2f}".format(avgWait[1])) #waiting queue length
     print("Average Time in Waiting List: " + "{:.2f}".format(avgWait[0] / avgWait[1])) #average time in waiting queue
     # print("Weiharng eh idea: " + "{:.2f}".format(avgWait[0] / 25))
     
@@ -265,7 +266,7 @@ if __name__ == "__main__":
     choice = 0
 
     while(True):
-        choice = int(input ("What type do you want to run the job with? (1=First Fit/2=Best Fit): "))
+        choice = int(input ("What type do you want to run the job with? (1:First Fit/2:Best Fit): "))
         if choice == 1 or choice == 2:
             break
 
