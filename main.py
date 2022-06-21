@@ -9,6 +9,7 @@ partition_list = []
 logs = []
 error = []
 avgWait = [int(0), int(0)]
+avgIntFrag = [int(0), int(0)] #remaining, total
 jobType = False #false = first fit / true = best fit
 
 def threaded(fn):
@@ -107,6 +108,8 @@ def assignJobFirstFit():
                 x.startWork()
                 avgWait[0] += tempJob.waitingTime
                 avgWait[1] += 1
+                avgIntFrag[0] += x.size - tempJob.size
+                avgIntFrag[1] += x.size
                 break
             else:
                 continue
@@ -125,6 +128,8 @@ def assignJobFirstFit():
                 used = "{:.2f}% used".format((job.size / x.size) * 100)
                 logs.append(f"Assigned job {tempJob.id} ({tempJob.size})(0) to partition {x.id} ({x.size}) ({used}).")
                 x.startWork()
+                avgIntFrag[0] += x.size - tempJob.size
+                avgIntFrag[1] += x.size
                 break
             else:
                 continue
@@ -168,6 +173,8 @@ def assignJobBestFit():
             best.startWork()
             avgWait[0] += tempJob.waitingTime
             avgWait[1] += 1
+            avgIntFrag[0] += best.size - tempJob.size
+            avgIntFrag[1] += best.size
         else:
             continue
 
@@ -197,6 +204,8 @@ def assignJobBestFit():
             used = "{:.2f}% used".format((job.size / best.size) * 100)
             logs.append(f"Assigned job {tempJob.id} ({tempJob.size})(0) to partition {best.id} ({best.size}) ({used}).")
             best.startWork()
+            avgIntFrag[0] += best.size - tempJob.size
+            avgIntFrag[1] += best.size
         else:
             if job in job_list:
                 tempJob = job
@@ -247,10 +256,13 @@ def main():
     end = timer()
     print("Job type: " + str("Best Fit" if jobType else "First Fit"))
     print("Time Taken = " + "{:.4f}s".format(end-start))
-    print("Average Time taken per job (s): " + str((end-start) / 25)) #avg jobs processed per time unit
+    print("Average Time taken per job (s): " + "{:.2f}".format((end-start) / 25)) #avg jobs processed per time unit
     print("Average Time taken per job: " + "{:.2f}".format(25 / (end-start))) #avg jobs processed per time unit
     print("Items added to waiting list: " + "{:.2f}".format(avgWait[1])) #waiting queue length
     print("Average Time in Waiting List: " + "{:.2f}".format(avgWait[0] / avgWait[1])) #average time in waiting queue
+    print(f"Amount of Internal Fragmentations: {avgIntFrag[0]}")
+    print(f"Total Memory Called: {avgIntFrag[1]}")
+    print("Percentage of Memory Wasted: " + "{:.2f}".format((avgIntFrag[0] / avgIntFrag[1]) * 100))
     # print("Weiharng eh idea: " + "{:.2f}".format(avgWait[0] / 25))
     
 
