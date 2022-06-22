@@ -257,7 +257,7 @@ def main():
     print("Job type".ljust(40, '.') + str(": Best Fit" if jobType else ": First Fit"))
     print("Time Taken".ljust(40, '.') + ": {:.4f}s".format(end-start))
     print("Average Time taken per job (s)".ljust(40, '.') + ": {:.2f}".format((end-start) / 25)) #avg jobs processed per time unit
-    print("Average Time taken per job".ljust(40, '.') + ": {:.2f}".format(25 / (end-start))) #avg jobs processed per time unit
+    print("Job Processed per Time Unit".ljust(40, '.') + ": {:.2f}".format(25 / (end-start))) #avg jobs processed per time unit
     print("Items added to waiting list".ljust(40, '.') + ": {:.2f}".format(avgWait[1])) #waiting queue length
     print("Average Time in Waiting List".ljust(40, '.') + ": {:.2f}".format(avgWait[0] / avgWait[1])) #average time in waiting queue
     print(f"Amount of Internal Fragmentations".ljust(40, '.') + f": {avgIntFrag[0]}")
