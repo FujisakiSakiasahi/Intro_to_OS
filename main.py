@@ -3,6 +3,8 @@ import threading
 from time import sleep
 from timeit import default_timer as timer
 
+from numpy import partition
+
 job_list = []
 waiting_list = []
 partition_list = []
@@ -25,10 +27,14 @@ class Partition:
         self.size = size
         self.time = int(0)
         self.busy = False
+        self.used = False
         self.job = None
 
     @threaded
     def startWork(self):
+        if not self.used:
+            self.used = True
+
         while(self.time > 0):
             self.time -= 1
             sleep(1)
@@ -263,6 +269,7 @@ def main():
     print(f"Amount of Internal Fragmentations".ljust(40, '.') + f": {avgIntFrag[0]}")
     print(f"Total Memory Called".ljust(40, '.') + f": {avgIntFrag[1]}")
     print("Percentage of Memory Wasted".ljust(40, '.') + ": {:.2f}".format((avgIntFrag[0] / avgIntFrag[1]) * 100))
+    print("Partitions not used: " + ", ".join(list(part.id for part in partition_list if not part.used)))
     # print("Weiharng eh idea: " + "{:.2f}".format(avgWait[0] / 25))
     input("Press enter to exit.")
 
